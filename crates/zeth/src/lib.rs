@@ -114,6 +114,7 @@ where
     }
 
     // preflight the block building process
+    let ts_preflight = std::time::Instant::now();
     let build_result = B::build_blocks(
         chain_id,
         cache_dir.clone(),
@@ -122,6 +123,8 @@ where
         build_args.block_count,
     )
     .await?;
+    let elapsed_preflight = ts_preflight.elapsed();
+    println!("preflight time: {:?}", elapsed_preflight);
 
     if !cli.should_execute() {
         return Ok(());
@@ -149,7 +152,9 @@ where
             bincode::deserialize::<Receipt>(&receipt_data)?
         } else {
             info!("Computing uncached receipt. This might take some time.");
+            println!("Begin proving");
             // run prover
+            let ts_prove = std::time::Instant::now();
             let network_name = String::from(network_name);
             let elf = elf.to_owned();
             let prove_info = spawn_blocking(move || {
@@ -159,11 +164,12 @@ where
                 prover.prove_with_opts(exec_env, &elf, &prover_opts)
             })
             .await??;
-
+            let elapsed_prove = ts_prove.elapsed();
             info!(
                 "Proof of {} total cycles ({} user cycles) computed.",
                 prove_info.stats.total_cycles, prove_info.stats.user_cycles
             );
+            println!("prove time: {:?}", elapsed_prove);
             let mut output_file = File::create(&file_name)?;
             // Write receipt data to file
             let receipt_bytes =
