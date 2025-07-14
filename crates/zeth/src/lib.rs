@@ -181,10 +181,14 @@ where
                 .flush()
                 .expect("Failed to flush receipt output file data.");
             info!("Receipt file {file_name} written.");
+            println!("Receipt file size: {}", receipt_bytes.len());
             prove_info.receipt
         };
 
+        let verification_start = std::time::Instant::now();
         receipt.verify(image_id).expect("Failed to verify proof.");
+        let verification_elapsed = verification_start.elapsed();
+        println!("Verification time: {:?}", verification_elapsed);
         info!("Verified computed proof.");
         receipt.journal.bytes
     } else {
