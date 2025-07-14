@@ -102,14 +102,18 @@ where
             dbg!(&expected_journal);
             err = true;
         }
+        let verification_start = std::time::Instant::now();
         if receipt.verify(image_id).is_err() {
             error!("Invalid proof.");
             err = true;
         };
+        let verification_elapsed = verification_start.elapsed();
         if err {
             panic!("Verification error.");
         }
         info!("Receipt verified successfully.");
+        println!("Verification time: {:?}", verification_elapsed);
+        println!("Receipt file size: {}", receipt_data.len());
         return Ok(());
     }
 
@@ -185,10 +189,7 @@ where
             prove_info.receipt
         };
 
-        let verification_start = std::time::Instant::now();
         receipt.verify(image_id).expect("Failed to verify proof.");
-        let verification_elapsed = verification_start.elapsed();
-        println!("Verification time: {:?}", verification_elapsed);
         info!("Verified computed proof.");
         receipt.journal.bytes
     } else {
